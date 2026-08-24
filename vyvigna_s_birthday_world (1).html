@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>For Vyvigna 💗</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+
+    <style>
+        :root {
+            --stripe-1: #fdfbfb;
+            --stripe-2: #fcebeb;
+            --stripe-3: #fff2cc;
+            --stripe-4: #e6e6fa;
+        }
+
+        body {
+            background-color: #111827; /* Dark background outside the scrapbook */
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100dvh;
+            font-family: 'Fredoka', sans-serif;
+            overflow: hidden; /* Prevent scrolling on body, handle inside container */
+        }
+
+        /* The Scrapbook Container */
+        #app-container {
+            width: 100%;
+            max-width: 420px;
+            height: 100dvh;
+            max-height: 900px;
+            background: repeating-linear-gradient(
+                45deg,
+                var(--stripe-1),
+                var(--stripe-1) 15px,
+                var(--stripe-2) 15px,
+                var(--stripe-2) 30px,
+                var(--stripe-3) 30px,
+                var(--stripe-3) 45px,
+                var(--stripe-4) 45px,
+                var(--stripe-4) 60px
+            );
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            color: #333;
+        }
+
+        @media (min-width: 430px) {
+            #app-container {
+                height: 850px;
+                border-radius: 2rem;
+                border: 6px solid #fff;
+            }
+        }
+
+        /* Typography */
+        .font-hand {
+            font-family: 'Caveat', cursive;
+        }
+
+        /* Utilities */
+        .screen {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            padding: 1.5rem;
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .screen::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide {
+            display: none !important;
+        }
+
+        /* Scrapbook Elements */
+        .polaroid {
+            background: white;
+            padding: 0.5rem 0.5rem 2rem 0.5rem;
+            box-shadow: 2px 4px 12px rgba(0,0,0,0.15);
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .tape {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-2deg);
+            width: 80px;
+            height: 25px;
+            background: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            backdrop-filter: blur(2px);
+            z-index: 10;
+        }
+
+        /* Animations */
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+        .animate-wiggle {
+            animation: wiggle 2s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Lined Paper */
+        .bg-lined {
+            background-color: #fff;
+            background-image: repeating-linear-gradient(transparent, transparent 29px, #60a5fa 29px, #60a5fa 30px);
+            background-position: 0 40px;
+        }
+        .bg-lined::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 40px;
+            width: 2px;
+            background: #f87171;
+        }
+
+        /* Envelope Magic */
+        .envelope-wrapper {
+            position: relative;
+            width: 280px;
+            height: 200px;
+            margin: auto;
+            perspective: 1000px;
+        }
+        .envelope {
+            position: absolute;
+            inset: 0;
+            background: #fbcfe8;
+            border-radius: 8px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border-left: 140px solid transparent;
+            border-right: 140px solid transparent;
+            border-top: 100px solid #f9a8d4;
+            transform-origin: top;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 20;
+        }
+        .envelope-wrapper.open .flap {
+            transform: rotateX(180deg);
+            z-index: 5;
+        }
+        .letter {
+            position: absolute;
+            bottom: 0;
+            left: 5%;
+            width: 90%;
+            height: 90%;
+            background: white;
+            border-radius: 8px;
+            transition: transform 0.8s ease 0.3s;
+            z-index: 10;
+            padding: 1rem;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        .envelope-wrapper.open .letter {
+            transform: translateY(-80px);
+            z-index: 25;
+        }
+        .envelope-front {
+            position: absolute;
+            inset: 0;
+            border-left: 140px solid #f472b6;
+            border-right: 140px solid #f472b6;
+            border-bottom: 100px solid #ec4899;
+            border-top: 100px solid transparent;
+            z-index: 15;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        /* Interactive Elements */
+        .sticker {
+            cursor: pointer;
+            transition: transform 0.2s;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.2));
+        }
+        .sticker:active {
+            transform: scale(0.9);
+        }
+
+        /* Fake Browser */
+        .fake-browser {
+            border: 2px solid #cbd5e1;
+            border-radius: 0.75rem;
+            background: #f8fafc;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .browser-header {
+            background: #e2e8f0;
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .browser-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        /* Custom Button */
+        .btn-cute {
+            background: linear-gradient(to bottom right, #f472b6, #ec4899);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: bold;
+            box-shadow: 0 4px 0 #be185d, 0 8px 10px rgba(0,0,0,0.2);
+            transition: all 0.1s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-cute:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #be185d, 0 2px 4px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+
+        <!-- Toast Notification Area -->
+        <div id="toast-container" class="absolute bottom-10 left-0 w-full flex justify-center z-50 pointer-events-none opacity-0 transition-opacity duration-300">
+            <div id="toast-msg" class="bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg font-hand text-xl"></div>
+        </div>
+
+        <!-- Fullscreen Image Viewer -->
+        <div id="image-viewer" class="absolute inset-0 bg-black/90 z-[100] hidden flex-col items-center justify-center p-4">
+            <button onclick="closeImageViewer()" class="absolute top-6 right-6 text-white text-4xl font-bold z-50 hover:scale-110 transition-transform">&times;</button>
+            <img id="viewer-img" src="" class="max-w-full max-h-[80dvh] object-contain rounded-lg shadow-2xl transition-transform duration-300" />
+            <p id="viewer-caption" class="text-white font-hand text-2xl mt-6 text-center"></p>
+        </div>
+
+        <!-- SCREEN 1: Intro -->
+        <div id="screen-1" class="screen active justify-center items-center text-center">
+            <div class="text-gray-500 font-bold mb-8 tracking-widest text-lg">12:00 AM</div>
+            
+            <h1 class="text-4xl font-bold text-pink-600 mb-4 animate-float">Hey Vyvigna!! 👀</h1>
+            <p class="text-xl mb-2 text-gray-700">I made something for you.</p>
+            
+            <p id="screen-1-text" class="text-2xl font-bold text-pink-500 my-8 min-h-[40px] font-hand text-3xl">Do you wanna see it?</p>
+            
+            <div class="flex gap-4 relative w-full justify-center h-20 items-center">
+                <button onclick="nextScreen(2)" class="btn-cute flex-shrink-0 z-10">YES 💗</button>
+                <button id="no-btn" class="bg-gray-200 text-gray-600 px-6 py-3 rounded-full font-bold shadow transition-all duration-75 flex-shrink-0 z-20">NO 😒</button>
+            </div>
+            
+            <!-- Twinkling stars scattered -->
+            <div class="absolute top-20 left-10 text-yellow-400 text-2xl animate-pulse">⭐</div>
+            <div class="absolute bottom-40 right-10 text-yellow-400 text-xl animate-pulse delay-75">✦</div>
+            <div class="absolute top-40 right-12 text-pink-400 text-xl animate-pulse delay-150">♡</div>
+        </div>
+
+        <!-- SCREEN 2: Welcome -->
+        <div id="screen-2" class="screen flex-col items-center text-center pt-12">
+            <h1 class="text-4xl font-bold text-pink-600 animate-wiggle mb-2">HAPPY BIRTHDAYYYYY 💗</h1>
+            <h2 class="text-3xl font-black text-purple-600 mb-1">VYVIGNA 🌎</h2>
+            <p class="font-hand text-2xl text-gray-600 mb-8 -rotate-2">my Bangarmm</p>
+
+            <div class="polaroid rotate-3 w-64 mb-8">
+                <div class="tape"></div>
+                <img src="https://res.cloudinary.com/doykj9t7e/image/upload/v1787587875/IMG_20260808_131632020_HDR_PORTRAIT_o1de5a.jpg" class="w-full h-64 object-cover rounded" alt="Vyvigna">
+            </div>
+
+            <p class="text-lg font-medium text-gray-700 mb-8 bg-white/80 p-3 rounded-xl shadow-sm border border-pink-100">Welcome to your tiny little birthday world.</p>
+            
+            <button onclick="nextScreen(3)" class="btn-cute text-lg mt-auto mb-10 w-48 mx-auto">Next &rarr;</button>
+        </div>
+
+        <!-- SCREEN 3: Explore -->
+        <div id="screen-3" class="screen">
+            <h2 class="text-3xl font-bold text-pink-600 text-center mt-6">Okay maa... explore 👀</h2>
+            <p class="text-center font-hand text-xl text-gray-500 mb-8">Click on everything.</p>
+
+            <div class="relative w-full flex-grow">
+                <!-- Music Player / Cassette -->
+                <div onclick="toggleMusic()" class="absolute top-0 left-4 sticker bg-gray-800 text-white p-3 rounded-lg shadow-lg flex items-center gap-2 rotate-2 hover:scale-105">
+                    <span class="text-2xl">📼</span>
+                    <span id="music-text" class="text-sm font-medium">play our little song</span>
+                </div>
+
+                <!-- Camera / Memories -->
+                <div onclick="openMemories()" class="absolute top-24 right-6 sticker group">
+                    <div class="w-24 h-24 bg-pink-100 rounded-2xl shadow-lg border-4 border-white flex items-center justify-center -rotate-6 group-hover:rotate-0 transition-all">
+                        <span class="text-4xl">📷</span>
+                    </div>
+                    <p class="text-center font-hand mt-1 font-bold text-gray-600 -rotate-6">memories</p>
+                </div>
+
+                <!-- Envelope / Letter -->
+                <div onclick="openLetter()" class="absolute top-48 left-10 sticker group">
+                    <div class="w-28 h-20 bg-blue-100 rounded-lg shadow-lg border-2 border-white flex items-center justify-center rotate-6 group-hover:-rotate-3 transition-all relative overflow-hidden">
+                        <div class="absolute inset-0 border-t-[40px] border-t-blue-200 border-l-[56px] border-l-transparent border-r-[56px] border-r-transparent"></div>
+                        <span class="text-3xl z-10">💌</span>
+                    </div>
+                    <p class="text-center font-hand mt-1 font-bold text-gray-600 rotate-6">for you</p>
+                </div>
+
+                <!-- Easter Eggs -->
+                <div onclick="showToast('I love you idiot 😭')" class="absolute top-80 right-12 sticker text-4xl animate-float">💗</div>
+                <div onclick="showToast('Still here? 🥹')" class="absolute top-[350px] left-6 sticker text-3xl text-yellow-400 animate-wiggle">⭐</div>
+                <div onclick="showToast('Okay seriously go enjoy your birthday.')" class="absolute bottom-4 right-1/2 translate-x-1/2 sticker text-2xl bg-white rounded-full p-2 shadow">🎁</div>
+            </div>
+
+            <button onclick="nextScreen(4)" class="btn-cute text-lg mt-auto mb-6 w-full opacity-0 pointer-events-none transition-opacity duration-1000" id="explore-next-btn">Continue &rarr;</button>
+        </div>
+
+        <!-- OVERLAY: Memories (Fake Browser) -->
+        <div id="overlay-memories" class="absolute inset-0 bg-white/95 z-40 transform translate-y-full transition-transform duration-500 flex flex-col p-4">
+            <div class="fake-browser flex-grow mb-4 relative">
+                <div class="browser-header">
+                    <div class="browser-dot bg-red-400"></div>
+                    <div class="browser-dot bg-yellow-400"></div>
+                    <div class="browser-dot bg-green-400"></div>
+                    <div class="flex-grow flex justify-center">
+                        <div class="bg-white px-4 py-1 rounded-md text-sm text-gray-500 shadow-inner w-3/4 flex items-center gap-2">
+                            <span>🔍</span> Moments of us
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="relative flex-grow p-4 overflow-y-auto bg-gray-50 custom-scroll">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Memories 📷</h2>
+                    
+                    <!-- Messy Collage -->
+                    <div class="relative h-[600px] w-full">
+                        <div onclick="viewImage(this, 'look at you 😭')" class="polaroid absolute top-0 left-2 rotate-6 w-36 sticker cursor-zoom-in">
+                            <div class="tape"></div>
+                            <img src="https://res.cloudinary.com/doykj9t7e/image/upload/v1787587874/IMG_20260808_134706701_HDR_PORTRAIT_l1se0x.jpg" class="w-full h-32 object-cover rounded">
+                            <p class="font-hand text-center mt-2 font-bold">look at you 😭</p>
+                        </div>
+
+                        <div onclick="viewImage(this, 'us 🫂')" class="polaroid absolute top-20 right-2 -rotate-3 w-40 sticker cursor-zoom-in z-10">
+                            <div class="tape"></div>
+                            <img src="https://res.cloudinary.com/doykj9t7e/image/upload/v1787587873/IMG_20260808_133029220_HDR_vgdkel.jpg" class="w-full h-36 object-cover rounded">
+                            <p class="font-hand text-center mt-2 font-bold">us 🫂</p>
+                        </div>
+
+                        <div onclick="viewImage(this, 'this one >>>')" class="polaroid absolute top-56 left-4 -rotate-6 w-32 sticker cursor-zoom-in">
+                            <div class="tape"></div>
+                            <img src="https://res.cloudinary.com/doykj9t7e/image/upload/v1787587872/IMG_20260808_133853988_HDR_PORTRAIT_sh53a2.jpg" class="w-full h-32 object-cover rounded">
+                            <p class="font-hand text-center mt-2 font-bold">this one >>></p>
+                        </div>
+
+                        <div onclick="viewImage(this, 'why are we like this?')" class="polaroid absolute top-72 right-6 rotate-12 w-36 sticker cursor-zoom-in z-10">
+                            <div class="tape"></div>
+                            <img src="https://res.cloudinary.com/doykj9t7e/image/upload/v1787587872/IMG_20260808_133053981_HDR_xbq23v.jpg" class="w-full h-32 object-cover rounded">
+                            <p class="font-hand text-center mt-2 font-bold leading-tight">why are we like this?</p>
+                        </div>
+
+                        <div onclick="viewImage(this, 'only we understand.')" class="polaroid absolute top-[400px] left-10 -rotate-2 w-44 sticker cursor-zoom-in">
+                            <div class="tape"></div>
+                            <img src="https://res.cloudinary.com/doykj9t7e/image/upload/v1787587868/IMG_20260808_133846372_PORTRAIT_ordlbn.jpg" class="w-full h-40 object-cover rounded">
+                            <p class="font-hand text-center mt-2 font-bold">only we understand.</p>
+                        </div>
+                        
+                        <div class="absolute top-[480px] right-8 text-4xl animate-wiggle">✨</div>
+                        <div class="absolute top-32 left-1/2 text-3xl text-pink-400">💕</div>
+                    </div>
+                </div>
+            </div>
+            <button onclick="closeMemories()" class="bg-gray-200 text-gray-700 py-3 rounded-xl font-bold w-full active:scale-95 transition-transform">&larr; back</button>
+        </div>
+
+        <!-- OVERLAY: Envelope / Love Letter -->
+        <div id="overlay-letter" class="absolute inset-0 bg-[#fff5f5]/95 z-40 transform translate-y-full transition-transform duration-500 flex flex-col justify-center items-center p-6">
+            <button onclick="closeLetter()" class="absolute top-6 left-6 text-gray-500 font-bold active:scale-95 transition-transform">&larr; back</button>
+            
+            <div id="envelope" class="envelope-wrapper" onclick="openEnvelope()">
+                <div class="envelope"></div>
+                <div class="letter overflow-y-auto">
+                    <!-- Note contents, visible when opened -->
+                    <div class="font-hand text-lg space-y-4 text-gray-800 pb-10" id="letter-content" style="opacity: 0; transition: opacity 0.5s 0.8s;">
+                        <p class="text-xl font-bold text-pink-600">Happiest birthday to my World 🌎</p>
+                        <p>Thanks for coming into my life my Bangarmm 💛</p>
+                        <p class="text-sm bg-yellow-100 p-2 rounded -rotate-1 shadow-sm w-max inline-block">Hope u read this message first as my first wish 😆</p>
+                        <p class="text-xs text-gray-500 rotate-2">kind of jealous 🤪</p>
+                        <p class="text-2xl font-black text-red-500">U r mine.</p>
+                        <p>Don't think about anything maa. Be always Happy 😊</p>
+                        <p class="text-blue-600">Eppudu navuthu vundali maa.</p>
+                        <p>Hope everything will be fine.</p>
+                        <p class="bg-pink-100 p-2 rounded shadow-sm">Heartfull ga nuv manchi position lo vundali, better than me 🤞🏻</p>
+                        <p class="font-bold text-xl">Love you so much my dear Bangarmm 💗</p>
+                        <p class="text-gray-600">Jst remember me. I'm there for u 😺</p>
+                    </div>
+                </div>
+                <div class="envelope-front"></div>
+                <div class="flap"></div>
+                <div id="env-click-hint" class="absolute -bottom-10 w-full text-center font-hand text-xl text-gray-500 animate-pulse">Tap to open 💌</div>
+            </div>
+        </div>
+
+        <!-- SCREEN 4: Memories + Emotional -->
+        <div id="screen-4" class="screen bg-[#f8f0eb] relative p-6">
+            <div class="flex-grow relative h-full w-full">
+                <!-- Images scattered -->
+                <div class="polaroid absolute top-4 left-0 rotate-3 w-36 shadow-md transition-opacity duration-1000 opacity-0 s4-img">
+                    <img src="https://res.cloudinary.com/doykj9t7e/image/upload/v1787587867/IMG_20260808_132951183_vouufm.jpg" class="w-full h-32 object-cover rounded">
+                </div>
+                <div class="polaroid absolute top-32 right-0 -rotate-6 w-40 shadow-md transition-opacity duration-1000 delay-500 opacity-0 s4-img">
+                    <img src="https://res.cloudinary.com/doykj9t7e/image/upload/v1787587863/IMG_20260808_133019995_HDR_v2sxsn.jpg" class="w-full h-36 object-cover rounded">
+                </div>
+                <div class="polaroid absolute top-[280px] left-4 rotate-2 w-32 shadow-md transition-opacity duration-1000 delay-1000 opacity-0 s4-img">
+                    <img src="https://res.cloudinary.com/doykj9t7e/image/upload/v1787587862/IMG_20260808_132950210_wm2nd8.jpg" class="w-full h-32 object-cover rounded">
+                </div>
+
+                <!-- Text Reveals -->
+                <div class="absolute bottom-20 left-0 w-full font-hand text-2xl font-bold text-gray-800 space-y-3 px-4">
+                    <p class="s4-text opacity-0 transition-opacity duration-1000 translate-y-4">You saw my highs.</p>
+                    <p class="s4-text opacity-0 transition-opacity duration-1000 translate-y-4">My lows.</p>
+                    <p class="s4-text opacity-0 transition-opacity duration-1000 translate-y-4">My craziness.</p>
+                    <p class="s4-text opacity-0 transition-opacity duration-1000 translate-y-4">My tears.</p>
+                    <p class="s4-text opacity-0 transition-opacity duration-1000 translate-y-4">My dreams.</p>
+                    
+                    <div class="h-6"></div>
+                    
+                    <p class="s4-text opacity-0 transition-opacity duration-1000 translate-y-4 text-pink-600">Still… you are with me. 🫂</p>
+                    <p class="s4-text opacity-0 transition-opacity duration-1000 translate-y-4 text-blue-600 text-xl">You understand me without words. 🧠💭</p>
+                    <p class="s4-text opacity-0 transition-opacity duration-1000 translate-y-4">I'm so grateful for you every single day.</p>
+                </div>
+            </div>
+            
+            <button onclick="nextScreen(5)" class="btn-cute absolute bottom-6 right-6 opacity-0 transition-opacity duration-1000" id="s4-next-btn">Next &rarr;</button>
+        </div>
+
+        <!-- SCREEN 5: Diary -->
+        <div id="screen-5" class="screen bg-lined p-10 pl-16">
+            <div class="font-hand text-2xl text-gray-700 space-y-6 mt-8 leading-loose relative z-10">
+                <p class="s5-text opacity-0 transition-opacity duration-1000">Nak em chepalo telitledhu…</p>
+                <p class="s5-text opacity-0 transition-opacity duration-1000">Chala cheppali ani undhi…</p>
+                <p class="s5-text opacity-0 transition-opacity duration-1000">But I can't.</p>
+                
+                <div class="h-8"></div>
+                
+                <p class="s5-text opacity-0 transition-all duration-1000 scale-90 origin-left text-3xl font-black text-pink-600 bg-white/50 inline-block p-1">I JUST LOVE BEING WITH YOU.</p>
+                
+                <div class="h-4"></div>
+                
+                <p class="s5-text opacity-0 transition-opacity duration-1000">Thanks for being in every role in my life. 🤍</p>
+                <p class="s5-text opacity-0 transition-opacity duration-1000">Thanks for making my life this much beautiful. ❤️</p>
+                
+                <div class="h-8"></div>
+                
+                <p class="s5-text opacity-0 transition-opacity duration-1000 text-right font-bold text-xl">Forever love you maa. 🫂</p>
+            </div>
+            
+            <button onclick="nextScreen(6)" class="absolute bottom-6 right-8 text-gray-500 font-bold active:scale-95 transition-transform opacity-0" id="s5-next-btn">Turn page &rarr;</button>
+        </div>
+
+        <!-- SCREEN 6: Funny -->
+        <div id="screen-6" class="screen justify-center items-center text-center px-4 relative overflow-hidden bg-yellow-50">
+            <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#000 1px, transparent 1px); background-size: 20px 20px;"></div>
+            
+            <h2 class="text-4xl font-black text-red-500 mb-8 border-4 border-red-500 p-2 rotate-2 bg-white s6-elem scale-0 transition-transform duration-500">OKAY ENOUGH EMOTIONAL DRAMA 😭</h2>
+            
+            <div class="space-y-4 font-bold text-gray-700 text-lg s6-elem opacity-0 transition-opacity duration-500">
+                <p>Your man may have failed sometimes…</p>
+                <p>I can't always reach your expectations from me…</p>
+            </div>
+            
+            <h3 class="text-2xl font-black text-blue-600 my-8 bg-blue-100 p-3 rounded-xl -rotate-2 s6-elem opacity-0 transition-all duration-500 translate-y-4">BUT I'LL TRY MY BEST ALWAYS 🤞🏻</h3>
+            
+            <div class="space-y-2 font-hand text-2xl text-gray-600 mb-8 s6-elem opacity-0 transition-opacity duration-500">
+                <p>Sorry for the mistakes I had did.</p>
+                <p>But I won't repeat them. 🙂</p>
+            </div>
+            
+            <h1 class="text-5xl font-black text-gray-900 leading-tight mb-6 s6-elem opacity-0 transition-all duration-500 scale-50">NOW DON'T THINK ABOUT THE FCKING SHIT.</h1>
+            
+            <div class="flex items-center justify-center gap-4 s6-elem opacity-0 transition-transform duration-500 translate-y-10">
+                <h2 class="text-4xl font-black text-green-500 bg-white border-2 border-green-500 px-4 py-2 rounded-full animate-wiggle">BE HAPPY 😤</h2>
+                <div class="text-5xl">🦍</div>
+            </div>
+            
+            <p class="mt-6 font-bold text-xl text-pink-500 s6-elem opacity-0 transition-opacity duration-500">JUST SMILE EVERYDAY 😊</p>
+            
+            <button onclick="nextScreen(7)" class="absolute bottom-6 right-6 text-gray-500 font-bold active:scale-95 transition-transform s6-elem opacity-0">Next &rarr;</button>
+        </div>
+
+        <!-- SCREEN 7: The Promise -->
+        <div id="screen-7" class="screen justify-center items-center p-6 bg-slate-800">
+            <div class="bg-[#fdfbf7] w-full max-w-sm rounded-lg shadow-2xl p-8 relative overflow-hidden">
+                <!-- Card subtle border -->
+                <div class="absolute inset-2 border border-gray-200 rounded pointer-events-none"></div>
+                
+                <h3 class="text-gray-400 font-bold tracking-widest text-xs uppercase mb-8 text-center">One serious thing though...</h3>
+                
+                <p class="font-hand text-2xl text-gray-700 text-center mb-6">On this special day…</p>
+                
+                <h2 class="text-2xl font-black text-pink-600 text-center mb-8 px-4 py-2 border-y-2 border-pink-100">I promise I will never leave you. 🫴🏻</h2>
+                
+                <ul class="font-hand text-2xl text-gray-600 space-y-3 pl-4 mb-10 list-none">
+                    <li class="flex items-center gap-2"><span class="text-pink-400 text-sm">✦</span> I'll keep trying.</li>
+                    <li class="flex items-center gap-2"><span class="text-pink-400 text-sm">✦</span> I'll keep learning.</li>
+                    <li class="flex items-center gap-2"><span class="text-pink-400 text-sm">✦</span> I'll be there.</li>
+                    <li class="flex items-center gap-2"><span class="text-pink-400 text-sm">✦</span> I'll keep choosing you.</li>
+                </ul>
+                
+                <div class="text-right font-hand text-2xl font-bold text-gray-800 mb-6">
+                    — your man 🤍
+                </div>
+                
+                <div class="text-center font-bold text-pink-500 bg-pink-50 p-2 rounded-full text-sm">
+                    Forever love you maa ♾️
+                </div>
+            </div>
+            
+            <button onclick="nextScreen(8)" class="btn-cute mt-8 w-full max-w-sm">Next &rarr;</button>
+        </div>
+
+        <!-- SCREEN 8: Wishes -->
+        <div id="screen-8" class="screen bg-blue-50 p-6">
+            <h2 class="text-3xl font-bold text-center text-blue-800 mb-8 mt-4">All I want for you ✨</h2>
+            
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <div class="bg-yellow-100 p-4 rounded shadow-md transform -rotate-2 font-hand text-xl font-bold text-center text-gray-800">Happiness 😊</div>
+                <div class="bg-pink-100 p-4 rounded shadow-md transform rotate-3 font-hand text-xl font-bold text-center text-gray-800">Success ✨</div>
+                <div class="bg-green-100 p-4 rounded shadow-md transform -rotate-1 font-hand text-xl font-bold text-center text-gray-800">Good health 🤍</div>
+                <div class="bg-purple-100 p-4 rounded shadow-md transform rotate-2 font-hand text-xl font-bold text-center text-gray-800">Peace 🌸</div>
+                <div class="bg-orange-100 p-4 rounded shadow-md transform rotate-4 font-hand text-xl font-bold text-center text-gray-800">Beautiful memories 📸</div>
+                <div class="bg-blue-100 p-4 rounded shadow-md transform -rotate-3 font-hand text-xl font-bold text-center text-gray-800">Big dreams ⭐</div>
+                <div class="col-span-2 bg-red-100 p-4 rounded shadow-md transform rotate-1 font-hand text-2xl font-bold text-center text-gray-800">Endless smiles 🌎</div>
+            </div>
+            
+            <div class="font-hand text-2xl text-center text-gray-700 space-y-2 mb-8 bg-white/60 p-4 rounded-xl">
+                <p>May life always keep you smiling.</p>
+                <p>Stay the beautiful soul you are. 🤍</p>
+                <div class="h-2"></div>
+                <p class="text-pink-600 font-bold">Heartfull ga nuv manchi position lo undali.</p>
+                <p class="text-pink-600 font-bold">Better than me 🤞🏻</p>
+            </div>
+            
+            <button onclick="nextScreen(9)" class="absolute bottom-6 right-6 text-blue-600 font-bold active:scale-95 transition-transform">Next &rarr;</button>
+        </div>
+
+        <!-- SCREEN 9: Secret -->
+        <div id="screen-9" class="screen justify-center items-center bg-gray-900 text-white transition-colors duration-1000">
+            <div id="s9-initial" class="text-center w-full transition-opacity duration-500">
+                <p class="text-gray-400 font-bold mb-10 text-xl">Wait...</p>
+                <p class="text-2xl font-bold mb-16">One more thing.</p>
+                <button onclick="revealSecret()" class="btn-cute text-xl py-4 px-8 shadow-[0_0_20px_rgba(244,114,182,0.5)] animate-pulse">OPEN IT 👀</button>
+            </div>
+            
+            <div id="s9-reveal" class="hidden absolute inset-0 w-full h-full p-6 flex-col justify-center items-center overflow-hidden">
+                <!-- Background beautiful image (blurred) -->
+                <div class="absolute inset-0 opacity-20 scale-110 blur-sm z-0">
+                    <img src="https://res.cloudinary.com/doykj9t7e/image/upload/v1787587853/Screenshot_20260701-215938_Files_by_Google_dgslhl.png" class="w-full h-full object-cover">
+                </div>
+                
+                <div class="z-10 relative w-full max-w-sm">
+                    <div class="polaroid shadow-2xl mb-8 transform -rotate-2">
+                        <img src="https://res.cloudinary.com/doykj9t7e/image/upload/v1787587853/Screenshot_20260701-215938_Files_by_Google_dgslhl.png" class="w-full h-64 object-cover rounded">
+                    </div>
+                    
+                    <div class="font-hand text-3xl text-white font-bold text-center space-y-4 drop-shadow-md">
+                        <p class="s9-text opacity-0 transition-opacity duration-1000">You are my person.</p>
+                        <p class="s9-text opacity-0 transition-opacity duration-1000">My best friend.</p>
+                        <p class="s9-text opacity-0 transition-opacity duration-1000">My life partner.</p>
+                        <p class="s9-text opacity-0 transition-opacity duration-1000">My favourite human.</p>
+                        <div class="h-4"></div>
+                        <p class="s9-text opacity-0 transition-all duration-1000 scale-50 text-5xl text-pink-400 font-black">MY WORLD 🌎</p>
+                    </div>
+                </div>
+                
+                <button onclick="nextScreen(10)" class="absolute bottom-6 right-6 text-white font-bold active:scale-95 transition-transform z-20 opacity-0 s9-next">Final &rarr;</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 10: Final -->
+        <div id="screen-10" class="screen justify-center items-center text-center p-6 bg-[#fffaf0] relative overflow-hidden">
+            <!-- Edges images -->
+            <img src="https://res.cloudinary.com/doykj9t7e/image/upload/v1787587853/Snapchat-1967554070_cyk85p.jpg" class="absolute -top-10 -left-10 w-32 h-32 object-cover rounded-full shadow-lg opacity-50 rotate-12">
+            <img src="https://res.cloudinary.com/doykj9t7e/image/upload/v1787587853/Snapchat-974308395_ewzbfj.jpg" class="absolute top-20 -right-12 w-36 h-36 object-cover rounded-2xl shadow-lg opacity-50 -rotate-12">
+            <img src="https://res.cloudinary.com/doykj9t7e/image/upload/v1787587853/Snapchat-737203405_pcp2eh.jpg" class="absolute -bottom-8 -left-8 w-40 h-40 object-cover rounded-xl shadow-lg opacity-40 rotate-6">
+            
+            <div class="z-10 bg-white/80 p-8 rounded-3xl shadow-xl backdrop-blur-sm border-2 border-pink-100 w-full relative">
+                <div class="absolute -top-6 left-1/2 -translate-x-1/2 text-5xl">👑</div>
+                
+                <h1 class="text-3xl font-black text-pink-600 mb-6 mt-4">Happy Birthday, Vyvigna 💗</h1>
+                
+                <p class="font-bold text-gray-700 text-lg mb-4">Thanks for coming into my life, my Bangarmm.</p>
+                <p class="font-bold text-gray-700 text-lg mb-8">Thanks for making my life this much beautiful. ❤️</p>
+                
+                <p class="text-2xl font-black text-red-500 mb-10 bg-red-50 py-2 rounded-lg">Love you always and forever ♾️</p>
+                
+                <p class="font-hand text-2xl font-bold text-gray-800 -rotate-2">Now go enjoy your special day maa 😤💗</p>
+            </div>
+            
+            <div class="absolute bottom-6 w-full text-center left-0">
+                <p class="font-hand text-gray-500 text-sm">P.S. I hope I was your first wish 😆</p>
+            </div>
+            
+            <!-- Confetti Canvas overlay -->
+            <canvas id="confetti" class="absolute inset-0 w-full h-full pointer-events-none z-50"></canvas>
+        </div>
+
+    </div>
+
+    <script>
+        // --- State ---
+        let currentScreen = 1;
+        let memoriesViewed = false;
+        let letterViewed = false;
+
+        // --- Navigation ---
+        function nextScreen(num) {
+            document.querySelectorAll('.screen').forEach(s => {
+                s.classList.remove('active');
+            });
+            document.getElementById(`screen-${num}`).classList.add('active');
+            currentScreen = num;
+            
+            // Trigger specific screen animations
+            if(num === 4) triggerScreen4Animations();
+            if(num === 5) triggerScreen5Animations();
+            if(num === 6) triggerScreen6Animations();
+            if(num === 10) startConfetti();
+        }
+
+        // --- Screen 1: Dodging Button Logic ---
+        const noBtn = document.getElementById('no-btn');
+        const s1Text = document.getElementById('screen-1-text');
+        let dodgeCount = 0;
+
+        function moveBtn() {
+            dodgeCount++;
+            
+            if(dodgeCount === 2) s1Text.innerText = "SERIOUSLY?? 😭";
+            if(dodgeCount === 4) s1Text.innerText = "How dare you umph.";
+            if(dodgeCount === 6) s1Text.innerText = "Okay fine… press YES 😭";
+
+            const container = document.getElementById('screen-1');
+            const maxX = container.clientWidth - noBtn.clientWidth - 40;
+            const maxY = container.clientHeight - noBtn.clientHeight - 40;
+            
+            // Keep roughly within middle area to avoid going off screen
+            const x = Math.max(20, Math.random() * (maxX - 20));
+            // Offset Y so it doesn't cover text at the top
+            const y = Math.max(container.clientHeight/2 - 100, Math.random() * (maxY - 20));
+
+            noBtn.style.position = 'absolute';
+            noBtn.style.left = `${x}px`;
+            noBtn.style.top = `${y}px`;
+        }
+
+        noBtn.addEventListener('mouseover', moveBtn);
+        noBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Prevent touch click from registering fully before moving
+            moveBtn();
+        });
+        noBtn.addEventListener('click', moveBtn);
+
+        // --- Screen 3: Explore Logic ---
+        function checkExploreProgress() {
+            if (memoriesViewed && letterViewed) {
+                const btn = document.getElementById('explore-next-btn');
+                btn.classList.remove('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        // --- Screen 3: Overlay logic ---
+        function openMemories() {
+            document.getElementById('overlay-memories').classList.remove('translate-y-full');
+            memoriesViewed = true;
+            checkExploreProgress();
+        }
+        function closeMemories() {
+            document.getElementById('overlay-memories').classList.add('translate-y-full');
+        }
+
+        function openLetter() {
+            document.getElementById('overlay-letter').classList.remove('translate-y-full');
+            letterViewed = true;
+            checkExploreProgress();
+        }
+        function closeLetter() {
+            document.getElementById('overlay-letter').classList.add('translate-y-full');
+            // Reset envelope if closed
+            setTimeout(() => {
+                document.getElementById('envelope').classList.remove('open');
+                document.getElementById('letter-content').style.opacity = '0';
+                document.getElementById('env-click-hint').style.opacity = '1';
+            }, 500);
+        }
+
+        function openEnvelope() {
+            const env = document.getElementById('envelope');
+            if(!env.classList.contains('open')) {
+                env.classList.add('open');
+                document.getElementById('env-click-hint').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('letter-content').style.opacity = '1';
+                }, 800);
+            }
+        }
+
+        // --- Toast functionality ---
+        function showToast(message) {
+            const toast = document.getElementById('toast-container');
+            const msg = document.getElementById('toast-msg');
+            msg.innerText = message;
+            
+            toast.classList.remove('opacity-0');
+            toast.classList.add('-translate-y-10');
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                toast.classList.remove('-translate-y-10');
+            }, 3000);
+        }
+
+        // --- Fullscreen Image Viewer ---
+        function viewImage(el, caption) {
+            const imgViewer = document.getElementById('image-viewer');
+            const viewerImg = document.getElementById('viewer-img');
+            const viewerCap = document.getElementById('viewer-caption');
+            
+            const src = el.querySelector('img').src;
+            viewerImg.src = src;
+            viewerCap.innerText = caption;
+            
+            imgViewer.classList.remove('hidden');
+            imgViewer.classList.add('flex');
+            
+            // Small entrance animation
+            viewerImg.style.transform = 'scale(0.9)';
+            setTimeout(() => viewerImg.style.transform = 'scale(1)', 10);
+        }
+        function closeImageViewer() {
+            document.getElementById('image-viewer').classList.add('hidden');
+            document.getElementById('image-viewer').classList.remove('flex');
+        }
+
+        // --- Custom Reveal Animations per screen ---
+        function triggerScreen4Animations() {
+            const imgs = document.querySelectorAll('.s4-img');
+            imgs.forEach(img => img.classList.remove('opacity-0'));
+            
+            const texts = document.querySelectorAll('.s4-text');
+            texts.forEach((txt, i) => {
+                setTimeout(() => {
+                    txt.classList.remove('opacity-0', 'translate-y-4');
+                }, 1500 + (i * 800)); // Delay after images
+            });
+            
+            setTimeout(() => {
+                document.getElementById('s4-next-btn').classList.remove('opacity-0');
+            }, 1500 + (texts.length * 800) + 1000);
+        }
+
+        function triggerScreen5Animations() {
+            const texts = document.querySelectorAll('.s5-text');
+            texts.forEach((txt, i) => {
+                setTimeout(() => {
+                    txt.classList.remove('opacity-0');
+                    if(txt.classList.contains('scale-90')) {
+                        txt.classList.remove('scale-90');
+                        txt.classList.add('scale-100');
+                    }
+                }, 500 + (i * 1200)); 
+            });
+            setTimeout(() => {
+                document.getElementById('s5-next-btn').classList.remove('opacity-0');
+            }, 500 + (texts.length * 1200) + 500);
+        }
+
+        function triggerScreen6Animations() {
+            const elems = document.querySelectorAll('.s6-elem');
+            elems.forEach((el, i) => {
+                setTimeout(() => {
+                    el.classList.remove('opacity-0', 'scale-0', 'scale-50', 'translate-y-4', 'translate-y-10');
+                    el.classList.add('scale-100');
+                }, 300 + (i * 1000));
+            });
+        }
+
+        function revealSecret() {
+            document.getElementById('s9-initial').classList.add('opacity-0', 'pointer-events-none', 'hidden');
+            document.getElementById('s9-reveal').classList.remove('hidden');
+            document.getElementById('s9-reveal').classList.add('flex');
+            
+            const texts = document.querySelectorAll('.s9-text');
+            texts.forEach((txt, i) => {
+                setTimeout(() => {
+                    txt.classList.remove('opacity-0');
+                    if(txt.classList.contains('scale-50')) {
+                        txt.classList.remove('scale-50');
+                        txt.classList.add('scale-100');
+                    }
+                }, 500 + (i * 1200)); 
+            });
+            
+            setTimeout(() => {
+                document.querySelector('.s9-next').classList.remove('opacity-0');
+            }, 500 + (texts.length * 1200) + 1000);
+        }
+
+        // --- Tone JS Music Player Logic ---
+        let synth;
+        let isPlaying = false;
+
+        async function toggleMusic() {
+            const btnText = document.getElementById('music-text');
+            
+            if(!isPlaying) {
+                await Tone.start();
+                
+                if(!synth) {
+                    // Create a sweet, plucky music-box-like synth
+                    synth = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: "sine" },
+                        envelope: { attack: 0.02, decay: 0.3, sustain: 0.1, release: 1.5 }
+                    }).toDestination();
+                    synth.volume.value = -12; // keep it quiet and soft
+                    
+                    // Simple cute arpeggio sequence
+                    const notes = [
+                        "C5", "G4", "E4", "G4",
+                        "D5", "G4", "F4", "G4",
+                        "E5", "C5", "G4", "E4",
+                        "A4", "C5", "B4", "A4"
+                    ];
+                    
+                    let idx = 0;
+                    Tone.Transport.scheduleRepeat(time => {
+                        synth.triggerAttackRelease(notes[idx], "8n", time);
+                        idx = (idx + 1) % notes.length;
+                    }, "4n");
+                }
+                
+                Tone.Transport.start();
+                isPlaying = true;
+                btnText.innerText = "⏸ playing...";
+            } else {
+                Tone.Transport.pause();
+                isPlaying = false;
+                btnText.innerText = "▶ play our little song";
+            }
+        }
+
+        // --- Simple Confetti for Final Screen ---
+        function startConfetti() {
+            const canvas = document.getElementById('confetti');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            const particles = [];
+            const colors = ['#f472b6', '#fbbf24', '#60a5fa', '#a78bfa', '#34d399'];
+            
+            for(let i=0; i<100; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    w: Math.random() * 8 + 4,
+                    h: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    speed: Math.random() * 3 + 1,
+                    angle: Math.random() * 360,
+                    spin: Math.random() * 0.2 - 0.1
+                });
+            }
+            
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.y += p.speed;
+                    p.angle += p.spin;
+                    
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.angle);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+                    ctx.restore();
+                    
+                    if(p.y > canvas.height) p.y = -10;
+                });
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+    </script>
+</body>
+</html>
